@@ -62,10 +62,10 @@ static bool handle_ls_touch(UIState *s, int touch_x, int touch_y) {
   int btn_x_1 = 1660 - 200;
   int btn_x_2 = 1660 - 50;
   if ((btn_x_1 - padding <= touch_x) && (touch_x <= btn_x_2 + padding) && (855 - padding <= touch_y)) {
-    printf("ls button touched!\n");
     s->scene.lsButtonStatus++;
     if (s->scene.lsButtonStatus > 2) { s->scene.lsButtonStatus = 0; }
     send_ls(s, s->scene.lsButtonStatus);
+    printf("ls button: %d\n", s->scene.lsButtonStatus);
     return true;
   }
   return false;
@@ -75,10 +75,10 @@ static bool handle_df_touch(UIState *s, int touch_x, int touch_y) {
   //dfButton manager
   int padding = 40;
   if ((1660 - padding <= touch_x) && (855 - padding <= touch_y)) {
-    printf("df button touched!\n");
     s->scene.dfButtonStatus++;
     if (s->scene.dfButtonStatus > 3) { s->scene.dfButtonStatus = 0; }
     send_df(s, s->scene.dfButtonStatus);
+    printf("df button: %d\n", s->scene.dfButtonStatus);
     return true;
   }
   return false;
@@ -92,9 +92,9 @@ static bool handle_ml_touch(UIState *s, int touch_x, int touch_y) {
   int xs[2] = {1920 / 2 - btn_w / 2, 1920 / 2 + btn_w / 2};
   int y_top = 915 - btn_h / 2;
   if (xs[0] <= touch_x + padding && touch_x - padding <= xs[1] && y_top - padding <= touch_y) {
-    printf("ml button touched!\n");
     s->scene.mlButtonEnabled = !s->scene.mlButtonEnabled;
     send_ml(s, s->scene.mlButtonEnabled);
+    printf("ml button: %d\n", s->scene.mlButtonEnabled);
     return true;
   }
   return false;
@@ -103,9 +103,10 @@ static bool handle_ml_touch(UIState *s, int touch_x, int touch_y) {
 static bool handle_SA_touched(UIState *s, int touch_x, int touch_y) {
   if (s->active_app == cereal::UiLayoutState::App::NONE) {  // if onroad (not settings or home)
     if ((s->awake && s->vision_connected && s->status != STATUS_OFFROAD) || s->ui_debug) {  // if car started or debug mode
-      if (handle_df_touch(s, touch_x, touch_y)) { return true; }  // only allow one button to be pressed at a time
-      if (handle_ls_touch(s, touch_x, touch_y)) { return true; }
-      if (handle_ml_touch(s, touch_x, touch_y)) { return true; }
+      if (handle_df_touch(s, touch_x, touch_y) || handle_ls_touch(s, touch_x, touch_y) || handle_ml_touch(s, touch_x, touch_y)) {
+        s->scene.uilayout_sidebarcollapsed = true;  // collapse sidebar when tapping any SA button
+        return true;  // only allow one button to be pressed at a time
+      }
     }
   }
   return false;
@@ -262,8 +263,6 @@ int main(int argc, char* argv[]) {
       handle_sidebar_touch(s, touch_x, touch_y);
       if (!handle_SA_touched(s, touch_x, touch_y)) {  // if SA button not touched
         handle_vision_touch(s, touch_x, touch_y);
-      } else {
-        s->scene.uilayout_sidebarcollapsed = true;  // collapse sidebar when tapping any SA button
       }
     }
 
