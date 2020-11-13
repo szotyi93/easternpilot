@@ -110,7 +110,7 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     driverMonitorOffDEPRECATED @42;
     calibrationProgressDEPRECATED @47;
     invalidGiraffeHondaDEPRECATED @49;
-    invalidGiraffeToyotaDEPRECATED @60;
+    invalidGiraffeToyota @60;
     whitePandaUnsupported @81;
     startupGreyPanda @82;
     canErrorPersistentDEPRECATED @83;
