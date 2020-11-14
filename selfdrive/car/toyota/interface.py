@@ -68,8 +68,13 @@ class CarInterface(CarInterfaceBase):
       ret.steerRatio = 17.8
       tire_stiffness_factor = 0.444  # not optimized yet
       ret.mass = 2860. * CV.LB_TO_KG + STD_CARGO_KG  # mean between normal and hybrid
-      ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.035]]
-      ret.lateralTuning.pid.kf = 0.00006908923778520113   # full torque for 20 deg at 80mph means 0.00007818594
+      # ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.15], [0.035]]
+      # ret.lateralTuning.pid.kf = 0.00006908923778520113   # full torque for 20 deg at 80mph means 0.00007818594
+      ret.lateralTuning.init('indi')
+      ret.lateralTuning.indi.innerLoopGain = 4.0
+      ret.lateralTuning.indi.outerLoopGain = 3.0
+      ret.lateralTuning.indi.timeConstant = 0.1
+      ret.lateralTuning.indi.actuatorEffectiveness = 1.0
 
     elif candidate == CAR.LEXUS_RX:
       stop_and_go = True
@@ -263,7 +268,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.pid.kpV, ret.lateralTuning.pid.kiV = [[0.35], [0.15]]
       ret.lateralTuning.pid.kf = 0.00007818594
 
-    ret.steerRateCost = 1.
+    ret.steerRateCost = 0.5
     ret.centerToFront = ret.wheelbase * 0.44
 
     # TODO: get actual value, for now starting with reasonable value for
