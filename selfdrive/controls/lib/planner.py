@@ -14,6 +14,7 @@ from selfdrive.controls.lib.longcontrol import LongCtrlState, MIN_CAN_SPEED
 from selfdrive.controls.lib.fcw import FCWChecker
 from selfdrive.controls.lib.long_mpc import LongitudinalMpc
 from selfdrive.controls.lib.drive_helpers import V_CRUISE_MAX
+from selfdrive.controls.lib.long_mpc_model import LongitudinalMpcModel
 
 LON_MPC_STEP = 0.2  # first step is 0.2s
 AWARENESS_DECEL = -0.2     # car smoothly decel at .2m/s^2 when user is distracted
@@ -63,6 +64,7 @@ class Planner():
 
     self.mpc1 = LongitudinalMpc(1)
     self.mpc2 = LongitudinalMpc(2)
+    self.mpc_model = LongitudinalMpcModel()
 
     self.v_acc_start = 0.0
     self.a_acc_start = 0.0
@@ -72,8 +74,6 @@ class Planner():
     self.a_acc = 0.0
     self.v_cruise = 0.0
     self.a_cruise = 0.0
-    self.v_model = 0.0
-    self.a_model = 0.0
 
     self.longitudinalPlanSource = 'cruise'
     self.fcw_checker = FCWChecker()
@@ -84,11 +84,13 @@ class Planner():
 
   def choose_solution(self, v_cruise_setpoint, enabled):
     if enabled:
-      solutions = {'cruise': self.v_cruise, 'model': self.v_model}
+      solutions = {'cruise': self.v_cruise}
       if self.mpc1.prev_lead_status:
         solutions['mpc1'] = self.mpc1.v_mpc
       if self.mpc2.prev_lead_status:
         solutions['mpc2'] = self.mpc2.v_mpc
+      if self.mpc_model.valid:
+        solutions['model'] = self.mpc_model.v_mpc
 
       slowest = min(solutions, key=solutions.get)
 
@@ -104,10 +106,34 @@ class Planner():
         self.v_acc = self.v_cruise
         self.a_acc = self.a_cruise
       elif slowest == 'model':
-        self.v_acc = self.v_model
-        self.a_acc = self.a_model
+        self.v_acc = self.mpc_model.v_mpc
+        self.a_acc = self.mpc_model.a_mpc
 
-    self.v_acc_future = min([self.mpc1.v_mpc_future, self.mpc2.v_mpc_future, v_cruise_setpoint])
+    self.v_acc_future = min([self.mpc1.v_mpc_future, self.mpc2.v_mpc_future, self.mpc_model.v_mpc_future, v_cruise_setpoint])
+
+  def parse_modelV2_data(self, sm):
+    modelV2 = sm['modelV2']
+    distances, speeds, accelerations = [], [], []
+    if not sm.updated['modelV2'] or len(modelV2.position.x) == 0:
+      return distances, speeds, accelerations
+
+    # exp time func converted to constant 0 to 9 sec intervals as expected by mpc:
+    model_t_idx = [7, 10, 14, 18, 20, 23, 25, 27, 29, 30]  # except we start at 0.5s so first speed is sort of accurate
+    # (and we don't have to rely on v_ego!)
+    model_t = modelV2.position.t
+
+    distances = modelV2.position.x  # everything is derived from x position since velocity is outputting weird values
+    speeds = []
+    accelerations = [0]
+    new_dists = []
+    for t in model_t_idx:
+      new_dists.append(distances[t])
+      speeds.append(distances[t] / model_t[t])
+      if model_t_idx.index(t) > 0:  # skip first since we can't calculate (and don't want to use v_ego)
+        accelerations.append((speeds[-1] - speeds[-2]) / model_t[t])
+
+    accelerations[0] = accelerations[1] - (accelerations[2] - accelerations[1])  # extrapolate back first accel from second and third, less weight
+    return new_dists, speeds, accelerations  # hope this works
 
   def update(self, sm, pm, CP, VM, PP):
     """Gets called when new radarState is available"""
@@ -127,24 +153,6 @@ class Planner():
     enabled = (long_control_state == LongCtrlState.pid) or (long_control_state == LongCtrlState.stopping)
     following = lead_1.status and lead_1.dRel < 45.0 and lead_1.vLeadK > v_ego and lead_1.aLeadK > 0.0
 
-    if len(sm['model'].path.poly):  # old slowdown for curves code
-      path = list(sm['model'].path.poly)
-
-      # Curvature of polynomial https://en.wikipedia.org/wiki/Curvature#Curvature_of_the_graph_of_a_function
-      # y = a x^3 + b x^2 + c x + d, y' = 3 a x^2 + 2 b x + c, y'' = 6 a x + 2 b
-      # k = y'' / (1 + y'^2)^1.5
-      # TODO: compute max speed without using a list of points and without numpy
-      y_p = 3 * path[0] * self.path_x ** 2 + 2 * path[1] * self.path_x + path[2]
-      y_pp = 6 * path[0] * self.path_x + 2 * path[1]
-      curv = y_pp / (1. + y_p ** 2) ** 1.5
-
-      a_y_max = 3.1 - v_ego * 0.032
-      v_curvature = np.sqrt(a_y_max / np.clip(np.abs(curv), 1e-4, None))
-      model_speed = np.min(v_curvature)
-      model_speed = max(20.0 * CV.MPH_TO_MS, model_speed)  # Don't slow down below 20mph
-    else:
-      model_speed = 255.  # (MAX_SPEED)
-
     # Calculate speed for normal cruise control
     if enabled and not self.first_loop and not sm['carState'].gasPressed:
       accel_limits = [float(x) for x in calc_cruise_accel_limits(v_ego, following)]
@@ -162,12 +170,6 @@ class Planner():
                                                     jerk_limits[1], jerk_limits[0],
                                                     LON_MPC_STEP)
 
-      self.v_model, self.a_model = speed_smoother(self.v_acc_start, self.a_acc_start,
-                                                  model_speed,
-                                                  2 * accel_limits[1], accel_limits[0],
-                                                  2 * jerk_limits[1], jerk_limits[0],
-                                                  LON_MPC_STEP)
-
       # cruise speed can't be negative even is user is distracted
       self.v_cruise = max(self.v_cruise, 0.)
     else:
@@ -184,9 +186,16 @@ class Planner():
 
     self.mpc1.set_cur_state(self.v_acc_start, self.a_acc_start)
     self.mpc2.set_cur_state(self.v_acc_start, self.a_acc_start)
+    self.mpc_model.set_cur_state(self.v_acc_start, self.a_acc_start)
 
     self.mpc1.update(pm, sm['carState'], lead_1)
     self.mpc2.update(pm, sm['carState'], lead_2)
+
+    distances, speeds, accelerations = self.parse_modelV2_data(sm)
+    self.mpc_model.update(sm['carState'].vEgo, sm['carState'].aEgo,
+                          distances,
+                          speeds,
+                          accelerations)
 
     self.choose_solution(v_cruise_setpoint, enabled)
 
