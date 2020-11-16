@@ -14,7 +14,7 @@ class LongitudinalMpcModel():
     self.v_mpc_future = 0.0
     self.a_mpc = 0.0
     self.last_cloudlog_t = 0.0
-    self.ts = list(range(10))
+    self.ts = list(range(9))
 
     self.valid = False
 

@@ -133,7 +133,7 @@ class Planner():
         accelerations.append((speeds[-1] - speeds[-2]) / model_t[t])
 
     accelerations[0] = accelerations[1] - (accelerations[2] - accelerations[1])  # extrapolate back first accel from second and third, less weight
-    return new_dists, speeds, accelerations  # hope this works
+    return new_dists[1:], speeds[1:], accelerations[1:]
 
   def update(self, sm, pm, CP, VM, PP):
     """Gets called when new radarState is available"""
