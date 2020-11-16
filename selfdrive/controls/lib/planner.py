@@ -118,7 +118,7 @@ class Planner():
       return distances, speeds, accelerations
 
     # exp time func converted to constant 0 to 9 sec intervals as expected by mpc:
-    model_t_idx = [7, 10, 14, 18, 20, 23, 25, 27, 29, 30]  # except we start at 0.5s so first speed is sort of accurate
+    model_t_idx = [4, 10, 14, 18, 20, 23, 25, 27, 29, 30]  # except we start at 0.5s so first speed is sort of accurate
     # (and we don't have to rely on v_ego!)
     model_t = modelV2.position.t
 
