@@ -117,23 +117,28 @@ class Planner():
     if not sm.updated['modelV2'] or len(modelV2.position.x) == 0:
       return distances, speeds, accelerations
 
-    # exp time func converted to constant 0 to 9 sec intervals as expected by mpc:
-    model_t_idx = [4, 10, 14, 18, 20, 23, 25, 27, 29, 30]  # except we start at 0.5s so first speed is sort of accurate
-    # (and we don't have to rely on v_ego!)
     model_t = modelV2.position.t
+    mpc_times = [0.009765625] + list(range(1, 10))
 
-    distances = modelV2.position.x  # everything is derived from x position since velocity is outputting weird values
+    model_t_idx = [sorted(range(len(model_t)), key=[abs(idx - t) for t in model_t].__getitem__)[0] for idx in mpc_times]  # matches 0 to 9 interval to idx from t
+    speed_curr_idx = sorted(range(len(model_t)), key=[abs(t - .1) for t in model_t].__getitem__)[0]  # idx used for current speed, position still uses model_t_idx
+
+    distances = []  # everything is derived from x position since velocity is outputting weird values
     speeds = []
     accelerations = [0]
-    new_dists = []
     for t in model_t_idx:
-      new_dists.append(distances[t])
-      speeds.append(distances[t] / model_t[t])
+      distances.append(modelV2.position.x[t])
+
+      if t == 0:
+        speeds.append(modelV2.position.x[speed_curr_idx] / model_t[speed_curr_idx])
+      else:
+        speeds.append(modelV2.position.x[t] / model_t[t])
+
       if model_t_idx.index(t) > 0:  # skip first since we can't calculate (and don't want to use v_ego)
         accelerations.append((speeds[-1] - speeds[-2]) / model_t[t])
 
     accelerations[0] = accelerations[1] - (accelerations[2] - accelerations[1])  # extrapolate back first accel from second and third, less weight
-    return new_dists, speeds, accelerations  # hope this works
+    return distances, speeds, accelerations  # hope this works
 
   def update(self, sm, pm, CP, VM, PP):
     """Gets called when new radarState is available"""
