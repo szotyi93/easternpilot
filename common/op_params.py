@@ -93,11 +93,22 @@ class opParams:
                         'dynamic_camera_offset_time': Param(3.5, VT.number, 'How long to keep away from oncoming traffic in seconds after losing lead'),
                         'support_white_panda': Param(False, bool, 'Enable this to allow engagement with the deprecated white panda.\n'
                                                                   'localizer might not work correctly'),
-                        # 'lateral_controller': Param('default', str, 'You can change what lateral controller you use with this param!\n'
-                        #                                             '\'default\': use the default lateral controller for your vehicle\n'
-                        #                                             'Else, can be \'pid\', \'indi\', \'lqr\'\n'
-                        #                                             'If you choose a controller that hasn\'t been tuned for your vehicle, you will use default tuning that MAY not be optimal\n'
-                        #                                             'Check the README for which cars are tuned'),
+
+                        'innerLoopGain': Param(4.0, VT.number, 'Steer rate error gain\n'
+                                                               'high: jerky oscillation in high curvature\n'
+                                                               'low: sloppy', live=True),
+                        'outerLoopGain': Param(3.0, VT.number, 'Steer error gain, like PID\'s proportional\n'
+                                                               'high: twitchy lane centering\n'
+                                                               'low: sloppy, all over lane', live=True),
+                        'timeConstant': Param(0.1, VT.number, 'Extend exponential decay of prior output steer/smoothing of prior commands\n'
+                                                              'high: smoother but less responsive\n'
+                                                              'low: noisy actuation, responds to every bump', live=True),
+                        'actuatorEffectiveness': Param(1.0, VT.number, 'As this increases, actuation strength decreases\n'
+                                                                       'high: weak, sloppy lane centering. slow oscillation\n'
+                                                                       'low: overpower, saturation, jerky, fast oscillation', live=True),
+                        'steerActuatorDelay': Param(0.1, VT.number, 'Delay from sending torque to angle change', live=True),
+                        # 'steerRateCost': Param(1, VT.number, 'Steer rate cost. Higher is higher, etc.', live=True),
+
                         'prius_use_pid': Param(False, bool, 'This enables the PID lateral controller with new a experimental derivative tune\nFalse: stock INDI, True: TSS2-tuned PID'),
                         'use_lqr': Param(False, bool, 'Enable this to use LQR as your lateral controller over default with any car'),
                         'corollaTSS2_use_indi': Param(False, bool, 'Enable this to use INDI for lat with your Corolla with TSS2'),
