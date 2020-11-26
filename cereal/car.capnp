@@ -73,7 +73,6 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     preLaneChangeLeft @57;
     preLaneChangeRight @58;
     laneChange @59;
-    invalidGiraffeToyota @60;
     internetConnectivityNeeded @61;
     communityFeatureDisallowed @62;
     lowMemory @63;
@@ -102,6 +101,7 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     modeldLagging @89;
     deviceFalling @90;
     fanMalfunction @91;
+    cameraMalfunction @92;
 
     gasUnavailableDEPRECATED @3;
     dataNeededDEPRECATED @16;
@@ -112,9 +112,13 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     driverMonitorOffDEPRECATED @42;
     calibrationProgressDEPRECATED @47;
     invalidGiraffeHondaDEPRECATED @49;
+    invalidGiraffeToyotaDEPRECATED @60;
+    whitePandaUnsupportedDEPRECATED @81;
+    startupGreyPandaDEPRECATED @82;
     canErrorPersistentDEPRECATED @83;
     focusRecoverActiveDEPRECATED @86;
     neosUpdateRequiredDEPRECATED @88;
+    modelLagWarningDEPRECATED @93;
   }
 }
 

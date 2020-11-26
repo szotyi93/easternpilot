@@ -283,7 +283,6 @@ const char* Panda::get_serial(){
 
   delete[] serial_buf;
   return NULL;
-
 }
 
 void Panda::set_power_saving(bool power_saving){
