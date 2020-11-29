@@ -66,14 +66,23 @@ class LatPIDController():
     self.sat_count = 0.0
     self.saturated = False
     self.control = 0
-    self.last_error = 0
+    self.errors = []
 
   def update(self, setpoint, measurement, speed=0.0, check_saturation=True, override=False, feedforward=0., deadzone=0., freeze_integrator=False):
     self.speed = speed
 
     error = float(apply_deadzone(setpoint - measurement, deadzone))
     self.p = error * self.k_p
-    d = self.k_d * (error - self.last_error)
+
+    d_idx = int(100 * self.op_params.get('deriv_period'))  # param is in seconds (previous was 1/100)
+    if len(self.errors) >= d_idx and d_idx != 0:  # makes sure list is long enough and avoids a div by 0 err
+      d = (error - self.errors[-d_idx]) / d_idx  # get deriv in terms of 100hz (tune scale doesn't change)
+      d *= self.k_d
+    else:
+      with open('/data/d_test', 'a') as f:
+        f.write('not working\n')
+      d = 0  # if not yet enough errors or user enters 0 for d_period
+
     self.f = feedforward * self.k_f * self.op_params.get('lat_f_multiplier')
 
     if override:
@@ -97,7 +106,9 @@ class LatPIDController():
       control = self.convert(control, speed=self.speed)
 
     self.saturated = self._check_saturation(control, check_saturation, error)
-    self.last_error = float(error)
+    self.errors.append(float(error))
+    while len(self.errors) > d_idx:
+      self.errors.pop(0)
 
     self.control = clip(control, self.neg_limit, self.pos_limit)
     return self.control

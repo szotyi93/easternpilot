@@ -102,6 +102,7 @@ class opParams:
                         'lat_d_gain': Param(1, VT.number, 'actual derivative gain', live=True),
                         'lat_f_multiplier': Param(1, VT.number, 'feedforward multiplier (multiplied by the value in interface)', live=True),
                         'steer_actuator_delay': Param(0.12, VT.number, 'The steer actuator delay', live=True),
+                        'deriv_period': Param(1 / 20., VT.number, 'Period of time over which derivative is calculated (in sec)', live=True),
 
                         # 'lateral_controller': Param('default', str, 'You can change what lateral controller you use with this param!\n'
                         #                                             '\'default\': use the default lateral controller for your vehicle\n'
