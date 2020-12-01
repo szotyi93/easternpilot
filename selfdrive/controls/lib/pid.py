@@ -60,7 +60,7 @@ class PIController():
     self.sat_count = 0.0
     self.saturated = False
     self.control = 0
-    self.last_error = 0
+    self.errors = []
 
   def update(self, setpoint, measurement, speed=0.0, check_saturation=True, override=False, feedforward=0., deadzone=0., freeze_integrator=False):
     self.speed = speed
@@ -68,8 +68,12 @@ class PIController():
     error = float(apply_deadzone(setpoint - measurement, deadzone))
     self.p = error * self.k_p
     d = 0
+    d_idx = int(100 * 0.05)
     if use_derivative:
-      d = k_d * (error - self.last_error)
+      if len(self.errors) >= d_idx:  # makes sure list is long enough
+        d = (error - self.errors[-d_idx]) / d_idx  # get deriv in terms of 100hz (tune scale doesn't change)
+        d *= k_d
+
 
     self.f = feedforward * self.k_f
 
@@ -86,7 +90,7 @@ class PIController():
       # or when i will move towards the sign of the error
       if ((error >= 0 and (control <= self.pos_limit or i < 0.0)) or
           (error <= 0 and (control >= self.neg_limit or i > 0.0))) and \
-         not freeze_integrator:
+              not freeze_integrator:
         self.i = i
 
     control = self.p + self.f + self.i + d
@@ -94,7 +98,9 @@ class PIController():
       control = self.convert(control, speed=self.speed)
 
     self.saturated = self._check_saturation(control, check_saturation, error)
-    self.last_error = float(error)
+    self.errors.append(float(error))
+    while len(self.errors) > d_idx:
+      self.errors.pop(0)
 
     self.control = clip(control, self.neg_limit, self.pos_limit)
     return self.control
