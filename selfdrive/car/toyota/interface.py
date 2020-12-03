@@ -63,6 +63,7 @@ class CarInterface(CarInterfaceBase):
       ret.lateralTuning.lqr.dcGain = 0.002237852961363602
 
     elif candidate == CAR.COROLLA:
+      ret.steerActuatorDelay = 0.38
       stop_and_go = False
       ret.safetyParam = 88
       ret.wheelbase = 2.70
