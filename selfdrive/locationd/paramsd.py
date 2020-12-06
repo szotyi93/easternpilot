@@ -58,7 +58,7 @@ class ParamsLearner:
       self.active = self.speed > 5 and in_linear_region
 
       if self.active:
-        self.kf.predict_and_observe(t, ObservationKind.STEER_ANGLE, np.array([[[math.radians(msg.steeringAngle)]]]))
+        self.kf.predict_and_observe(t, ObservationKind.STEER_ANGLE, np.array([[[math.radians(msg.steeringAngle)]]]), np.array([np.atleast_2d(math.radians(1)**2)]))
         self.kf.predict_and_observe(t, ObservationKind.ROAD_FRAME_X_SPEED, np.array([[[self.speed]]]))
         self.kf.predict_and_observe(t, ObservationKind.STEER_TORQUE, np.array([[[self.eps_torque]]]), np.array([[[10]]]))
 
