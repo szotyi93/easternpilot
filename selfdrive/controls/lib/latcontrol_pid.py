@@ -17,7 +17,7 @@ class LatControlPID():
     self.pid.reset()
 
   def update(self, active, CS, CP, path_plan, live_parameters):
-    print('FILTER: {}\nANGLE: {}'.format(round(live_parameters.steeringAngle, 3), round(CS.steeringAngle, 2)))
+    print('FILTER: {}\nANGLE: {}\n'.format(round(live_parameters.steeringAngle, 3), round(CS.steeringAngle, 2)))
     pid_log = log.ControlsState.LateralPIDState.new_message()
     pid_log.steerAngle = float(CS.steeringAngle)
     pid_log.steerRate = float(CS.steeringRate)
