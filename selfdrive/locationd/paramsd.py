@@ -30,6 +30,7 @@ class ParamsLearner:
     self.speed = 0
     self.steering_pressed = False
     self.steering_angle = 0
+    self.eps_torque = 0
 
     self.valid = True
 
@@ -51,6 +52,7 @@ class ParamsLearner:
       self.steering_angle = msg.steeringAngle
       self.steering_pressed = msg.steeringPressed
       self.speed = msg.vEgo
+      self.eps_torque = msg.steeringTorqueEps
 
       in_linear_region = abs(self.steering_angle) < 45 or not self.steering_pressed
       self.active = self.speed > 5 and in_linear_region
@@ -58,6 +60,7 @@ class ParamsLearner:
       if self.active:
         self.kf.predict_and_observe(t, ObservationKind.STEER_ANGLE, np.array([[[math.radians(msg.steeringAngle)]]]))
         self.kf.predict_and_observe(t, ObservationKind.ROAD_FRAME_X_SPEED, np.array([[[self.speed]]]))
+        self.kf.predict_and_observe(t, ObservationKind.STEER_TORQUE, np.array([[[self.eps_torque]]]))  # think this is correct
 
     if not self.active:
       # Reset time when stopped so uncertainty doesn't grow
@@ -129,7 +132,8 @@ def main(sm=None, pm=None):
       msg.liveParameters.stiffnessFactor = float(x[States.STIFFNESS])
       msg.liveParameters.angleOffsetAverage = math.degrees(x[States.ANGLE_OFFSET])
       msg.liveParameters.angleOffset = msg.liveParameters.angleOffsetAverage + math.degrees(x[States.ANGLE_OFFSET_FAST])
-      msg.liveParameters.angleSteers = float(x[States.STEER_ANGLE])  # todo: needs to be degrees?
+      msg.liveParameters.angleSteers = float(math.degrees(x[States.STEER_ANGLE]))  # todo: needs to be degrees?
+      print(float(math.degrees(x[States.STEER_ANGLE])))
       msg.liveParameters.valid = all((
         abs(msg.liveParameters.angleOffsetAverage) < 10.0,
         abs(msg.liveParameters.angleOffset) < 10.0,
