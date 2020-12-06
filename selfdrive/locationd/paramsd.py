@@ -60,7 +60,7 @@ class ParamsLearner:
       if self.active:
         self.kf.predict_and_observe(t, ObservationKind.STEER_ANGLE, np.array([[[math.radians(msg.steeringAngle)]]]))
         self.kf.predict_and_observe(t, ObservationKind.ROAD_FRAME_X_SPEED, np.array([[[self.speed]]]))
-        self.kf.predict_and_observe(t, ObservationKind.STEER_TORQUE, np.array([[[self.eps_torque]]]))  # think this is correct
+        # self.kf.predict_and_observe(t, ObservationKind.STEER_TORQUE, np.array([[[self.eps_torque]]]))  # think this is correct
 
     if not self.active:
       # Reset time when stopped so uncertainty doesn't grow
