@@ -68,7 +68,7 @@ class Controls:
     self.sm = sm
     if self.sm is None:
       self.sm = messaging.SubMaster(['thermal', 'health', 'model', 'liveCalibration',
-                                     'dMonitoringState', 'plan', 'pathPlan', 'liveLocationKalman'])
+                                     'dMonitoringState', 'plan', 'pathPlan', 'liveLocationKalman', 'liveParameters'])
 
     self.sm_smiskol = messaging.SubMaster(['radarState', 'dynamicFollowData', 'liveTracks', 'dynamicFollowButton',
                                            'laneSpeed', 'dynamicCameraOffset', 'modelLongButton'])
@@ -451,7 +451,7 @@ class Controls:
     # Gas/Brake PID loop
     actuators.gas, actuators.brake = self.LoC.update(self.active, CS, v_acc_sol, plan.vTargetFuture, a_acc_sol, self.CP, extras_loc)
     # Steering PID loop and lateral MPC
-    actuators.steer, actuators.steerAngle, lac_log = self.LaC.update(self.active, CS, self.CP, path_plan)
+    actuators.steer, actuators.steerAngle, lac_log = self.LaC.update(self.active, CS, self.CP, path_plan, self.sm['liveParameters'])
 
     # Check for difference between desired angle and angle for angle based control
     angle_control_saturated = self.CP.steerControlType == car.CarParams.SteerControlType.angle and \

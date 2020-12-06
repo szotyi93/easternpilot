@@ -16,7 +16,8 @@ class LatControlPID():
   def reset(self):
     self.pid.reset()
 
-  def update(self, active, CS, CP, path_plan):
+  def update(self, active, CS, CP, path_plan, live_parameters):
+    print('FILTER: {}\nANGLE: {}'.format(round(live_parameters.steeringAngle, 3), round(CS.steeringAngle, 2)))
     pid_log = log.ControlsState.LateralPIDState.new_message()
     pid_log.steerAngle = float(CS.steeringAngle)
     pid_log.steerRate = float(CS.steeringRate)
@@ -43,7 +44,7 @@ class LatControlPID():
       deadzone = 0.0
 
       check_saturation = (CS.vEgo > 10) and not CS.steeringRateLimited and not CS.steeringPressed
-      output_steer = self.pid.update(self.angle_steers_des, CS.steeringAngle, check_saturation=check_saturation, override=CS.steeringPressed,
+      output_steer = self.pid.update(self.angle_steers_des, live_parameters.steeringAngle, check_saturation=check_saturation, override=CS.steeringPressed,
                                      feedforward=steer_feedforward, speed=CS.vEgo, deadzone=deadzone)
       pid_log.active = True
       pid_log.p = self.pid.p

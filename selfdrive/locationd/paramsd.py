@@ -132,8 +132,7 @@ def main(sm=None, pm=None):
       msg.liveParameters.stiffnessFactor = float(x[States.STIFFNESS])
       msg.liveParameters.angleOffsetAverage = math.degrees(x[States.ANGLE_OFFSET])
       msg.liveParameters.angleOffset = msg.liveParameters.angleOffsetAverage + math.degrees(x[States.ANGLE_OFFSET_FAST])
-      msg.liveParameters.angleSteers = float(math.degrees(x[States.STEER_ANGLE]))  # todo: needs to be degrees?
-      print(float(math.degrees(x[States.STEER_ANGLE])))
+      msg.liveParameters.steeringAngle = float(math.degrees(x[States.STEER_ANGLE]))  # todo: needs to be degrees?
       msg.liveParameters.valid = all((
         abs(msg.liveParameters.angleOffsetAverage) < 10.0,
         abs(msg.liveParameters.angleOffset) < 10.0,
