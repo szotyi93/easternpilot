@@ -138,7 +138,7 @@ class CarKalman(KalmanFilter):
     # TODO: there has to be a real model for this, and we can use it everywhere
     stf = state[States.STEER_TORQUE_FACTOR, :][0, 0]
     sctf = state[States.STEER_CENTERING_TORQUE_FACTOR, :][0, 0]
-    state_dot[States.STEER_ANGLE.start, 0] = st/stf - ((sa)*u)/sctf
+    state_dot[States.STEER_ANGLE.start, 0] = st/stf - ((sa - angle_offset - angle_offset_fast)*u)/sctf
 
     # Basic descretization, 1st order integrator
     # Can be pretty bad if dt is big
