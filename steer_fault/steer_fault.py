@@ -22,8 +22,9 @@ from tools.lib.auth_config import set_token
 
 MIN_SAMPLES = 60 * 100
 
-with open('/data/jwt', 'r') as f:
-  set_token(f.read().strip())
+# with open('/data/jwt', 'r') as f:
+#   set_token(f.read().strip())
+set_token(sys.argv[1])
 
 
 def to_signed(n, bits):
@@ -88,6 +89,7 @@ def steer_fault(use_dir, plot=False):
           can['torque_cmd'] = to_signed((m.dat[1] << 8) | m.dat[2], 16)
         elif m.address == 0x260 and m.src == 0:  # STEER_TORQUE_SENSOR
           can['steering_pressed'] = abs(to_signed((m.dat[1] << 8) | m.dat[2], 16)) > STEER_THRESHOLD
+          can['driver_torque'] = to_signed((m.dat[1] << 8) | m.dat[2], 16)
         elif m.address == 0x25 and m.src == 0:  # STEER_ANGLE_SENSOR
           steer_angle = to_signed(int(bin(m.dat[0])[2:].zfill(8)[4:] + bin(m.dat[1])[2:].zfill(8), 2), 12) * 1.5
           steer_fraction = to_signed(int(bin(m.dat[4])[2:].zfill(8)[:4], 2), 4) * 0.1
@@ -98,9 +100,8 @@ def steer_fault(use_dir, plot=False):
       if (None not in [CS, PP, *can.values()] and CS.cruiseState.enabled and  # creates uninterupted sections of engaged data
               abs(msg.logMonoTime - last_time) * 1e-9 < 1 / 20):  # also split if there's a break in time
 
-        print(can['lka_state'])
         data[-1].append({'can': can.copy(), 'v_ego': CS.vEgo, 'angle_steers_des': PP.angleSteers,
-                         'angle_offset': PP.angleOffset, 'time': msg.logMonoTime * 1e-9})
+                         'angle_offset': PP.angleOffset, 'time': msg.logMonoTime * 1e-9, 'angle_rate': CS.steeringRate})
 
       elif len(data[-1]):  # if last list has items in it, append new empty section
         data.append([])
