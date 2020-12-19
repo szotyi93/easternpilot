@@ -43,13 +43,14 @@ def steer_fault(use_dir, plot=False):
 
   steer_delay = None
 
-  files = os.listdir(use_dir)
+  files = sorted(os.listdir(use_dir))
   files = [f for f in files if '.ini' not in f]
+  # print(files)
 
   routes = [[files[0]]]  # this mess ensures we process each route's segments independantly since sorting will join samples from random routes
   for rt in files[1:]:  # todo: clean up
-    rt_name = ''.join(rt.split('--')[:2])
-    if rt_name != ''.join(routes[-1][-1].split('--')[:2]):
+    rt_name = '--'.join(rt.split('--')[:2])
+    if rt_name != '--'.join(routes[-1][-1].split('--')[:2]):
       routes.append([rt])
     else:
       routes[-1].append(rt)

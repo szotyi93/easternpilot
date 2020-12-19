@@ -34,6 +34,7 @@ for data in fault_data:
     line['angle_accel'] = (line['can']['angle_steers'] - data[i - 1]['can']['angle_steers'])
 
     if line['can']['lka_state'] == 5 and data[i + fault_look_ahead]['can']['lka_state'] == 25 and data[i + fault_look_ahead - 1]['can']['lka_state'] == 5:  # catch faults only at frame before rising edge
+      # if line['v_ego'] < 10 * 0.447:
       faults.append(line)
     elif line['can']['lka_state'] == 5 and 25 not in [data[i + la + 1]['can']['lka_state'] for la in range(non_fault_look_ahead)]:  # gather samples where fault does not occur in x seconds
       non_faults.append(line)
@@ -51,16 +52,11 @@ print('{} faults, {} non-faults'.format(len(faults), len(non_faults)))
 
 
 def fault_check(sample):
-  return abs(sample['angle_rate']) > 100
+  # return abs(sample['angle_rate']) > 100
   # return (sample['angle_steers'] < 0 < sample['angle_rate'] or sample['angle_steers'] > 0 > sample['angle_rate']) and abs(sample['angle_rate']) > 100
-  # return abs(sample['angle_steers']) < 100 and abs(sample['angle_rate']) > 100
-  # return (((sample['angle_steers'] < 0 < sample['angle_steers'] + sample['angle_rate'] * 0.2) or
-  #             (sample['angle_steers'] > 0 > sample['angle_steers'] + sample['angle_rate'] * 0.2)) and abs(sample['can']['torque_cmd']) > 400) or \
-  #           (abs(sample['angle_steers']) > 20 and abs(sample['can']['torque_cmd']) > 400 and sample['can']['torque_cmd'] * sample['angle_steers'] < 0)
-  # return (abs(sample['can']['torque_cmd']) > 400 and abs(sample['angle_rate']) > 400) or (sample['can']['torque_cmd'] * sample['angle_rate'] < 0)
-  # return (sample['angle_rate'] * sample['can']['torque_cmd'] > 0 and abs(sample['angle_rate']) > 100) or ((sample['can']['driver_torque'] * sample['angle_rate'] > 0 and sample['angle_steers'] * sample['angle_rate'] < 0) and abs(sample['angle_rate']) > 100)
-  return sample['angle_rate'] * sample['can']['torque_cmd'] > 0 and abs(sample['can']['torque_cmd']) > 100 and abs(sample['angle_rate']) > 100  # this captures 71% of faults while only 0.99% of non faults
-  # return (abs(sample['angle_rate']) > 50 and abs(sample['angle_steers']) < 90 and sample['can']['torque_cmd'] * sample['angle_rate'] > 0) or (abs(sample['angle_rate']) > 100 and sample['angle_rate'] * sample['angle_steers'] < 0)
+  return (sample['angle_rate'] * sample['can']['torque_cmd'] > 0 and abs(sample['angle_rate']) > 100) or ((sample['can']['driver_torque'] * sample['angle_rate'] > 0 and sample['angle_steers'] * sample['angle_rate'] < 0) and abs(sample['angle_rate']) > 100)
+  # return sample['angle_rate'] * sample['can']['torque_cmd'] > 0 and abs(sample['can']['torque_cmd']) > 150 and abs(sample['angle_rate']) > 100  # this captures 71% of faults while only 0.99% of non faults
+  return abs(sample['angle_steers']) < 100 and abs(sample['angle_rate']) > 100 and abs(sample['can']['driver_torque']) < 200
 
 fault_results = list(map(fault_check, faults))
 non_fault_results = list(map(fault_check, non_faults))
@@ -82,7 +78,7 @@ for i, txt in enumerate(z):
   # print(txt)
   ax.annotate(txt, (x[i] + 2, y[i]), size=9)
 
-ax.scatter(x, y, c=np.interp(np.abs(z), scale, [0.95, 0]), cmap='gray')
+ax.scatter(x, y, c=np.interp(np.abs(z), scale, [0.9, 0.1]), cmap='gray')
 
 x = [abs(f['angle_steers']) for f in non_faults]
 y = [abs(f['angle_rate']) for f in non_faults]
@@ -96,3 +92,9 @@ plt.ylabel('rate')
 
 # sns.distplot([f['angle_rate'] for f in faults], bins=27)
 # sns.distplot([f['angle_steers'] for f in faults], bins=27)
+
+# for l in [faults[idx] for idx, i in enumerate(fault_results) if not i]:
+#   print(l)
+
+# for l in [non_faults[idx] for idx, i in enumerate(non_fault_results) if i]:
+#   print(l)
