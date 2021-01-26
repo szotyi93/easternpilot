@@ -12,6 +12,7 @@ import textwrap
 from typing import Dict, List
 from selfdrive.swaglog import cloudlog, add_logentries_handler
 from common.op_params import opParams
+from common.is_shane import is_shane
 
 
 from common.basedir import BASEDIR
@@ -80,8 +81,10 @@ import traceback
 from multiprocessing import Process
 
 # Run scons
-spinner = Spinner(noop=(__name__ != "__main__" or not ANDROID))
+spinner = Spinner()
 spinner.update("0")
+if __name__ != "__main__":
+  spinner.close()
 
 if not prebuilt:
   for retry in [True, False]:
@@ -121,13 +124,14 @@ if not prebuilt:
       compile_output += r
 
       if retry:
-        if not os.getenv("CI"):
+        if not os.getenv("CI") and not is_shane:
           print("scons build failed, cleaning in")
           for i in range(3, -1, -1):
             print("....%d" % i)
             time.sleep(1)
           subprocess.check_call(["scons", "-c"], cwd=BASEDIR, env=env)
-          shutil.rmtree("/tmp/scons_cache")
+          shutil.rmtree("/tmp/scons_cache", ignore_errors=True)
+          shutil.rmtree("/data/scons_cache", ignore_errors=True)
         else:
           print("scons build failed after retry")
           sys.exit(1)
@@ -140,9 +144,8 @@ if not prebuilt:
         cloudlog.error("scons build failed\n" + error_s)
 
         # Show TextWindow
-        no_ui = __name__ != "__main__" or not ANDROID
         error_s = "\n \n".join(["\n".join(textwrap.wrap(e, 65)) for e in errors])
-        with TextWindow("openpilot failed to build\n \n" + error_s, noop=no_ui) as t:
+        with TextWindow("openpilot failed to build\n \n" + error_s) as t:
           t.wait_for_exit()
 
         exit(1)
@@ -377,11 +380,8 @@ def kill_managed_process(name):
         join_process(running[name], 15)
         if running[name].exitcode is None:
           cloudlog.critical("unkillable process %s failed to die!" % name)
-          # TODO: Use method from HARDWARE
-          if ANDROID:
-            cloudlog.critical("FORCE REBOOTING PHONE!")
-            os.system("date >> /sdcard/unkillable_reboot")
-            os.system("reboot")
+          os.system("date >> /sdcard/unkillable_reboot")
+          HARDWARE.reboot()
           raise RuntimeError
       else:
         cloudlog.info("killing %s with SIGKILL" % name)
@@ -404,8 +404,10 @@ def cleanup_all_processes(signal, frame):
 
 
 def send_managed_process_signal(name, sig):
-  if name not in running or name not in managed_processes:
+  if name not in running or name not in managed_processes or \
+     running[name].exitcode is not None:
     return
+
   cloudlog.info(f"sending signal {sig} to {name}")
   os.kill(running[name].pid, sig)
 
@@ -614,23 +616,10 @@ if __name__ == "__main__":
 
     # Show last 3 lines of traceback
     error = traceback.format_exc(-3)
-    error = "Manager failed to start. Press Reset to pull and reset to origin!\n \n" + error
+    error = "Manager failed to start\n \n" + error
     with TextWindow(error) as t:
-      exit_status = t.wait_for_exit()
-    if exit_status == 'reset':
-      for _ in range(2):
-        try:
-          subprocess.check_output(["git", "pull"], cwd=BASEDIR)
-          subprocess.check_output(["git", "reset", "--hard", "@{u}"], cwd=BASEDIR)
-          print('git reset successful!')
-          break
-        except subprocess.CalledProcessError as e:
-          if _ != 1:
-            print('git reset failed, trying again')
-            time.sleep(5)  # wait 5 seconds and try again
+      t.wait_for_exit()
 
-    time.sleep(1)
-    subprocess.check_output(["am", "start", "-a", "android.intent.action.REBOOT"])
     raise
 
   # manual exit because we are forked

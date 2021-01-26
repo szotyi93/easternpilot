@@ -56,7 +56,9 @@ struct tm get_time(){
 }
 
 bool time_valid(struct tm sys_time){
-  return 1900 + sys_time.tm_year >= 2019;
+  int year = 1900 + sys_time.tm_year;
+  int month = 1 + sys_time.tm_mon;
+  return (year > 2020) || (year == 2020 && month >= 10);
 }
 
 void safety_setter_thread() {
@@ -107,7 +109,6 @@ void safety_setter_thread() {
   cereal::CarParams::Reader car_params = cmsg.getRoot<cereal::CarParams>();
   cereal::CarParams::SafetyModel safety_model = car_params.getSafetyModel();
 
-  LOGW("setting unsafe_mode for gas press");
   panda->set_unsafe_mode(1);  // see safety_declarations.h for allowed values
 
   auto safety_param = car_params.getSafetyParam();

@@ -73,7 +73,6 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     preLaneChangeLeft @57;
     preLaneChangeRight @58;
     laneChange @59;
-    invalidGiraffeToyota @60;
     internetConnectivityNeeded @61;
     communityFeatureDisallowed @62;
     lowMemory @63;
@@ -94,14 +93,13 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     startupMaster @78;
     fcw @79;
     steerSaturated @80;
-    whitePandaUnsupported @81;
-    startupGreyPanda @82;
     belowEngageSpeed @84;
     noGps @85;
     wrongCruiseMode @87;
     modeldLagging @89;
     deviceFalling @90;
     fanMalfunction @91;
+    cameraMalfunction @92;
 
     gasUnavailableDEPRECATED @3;
     dataNeededDEPRECATED @16;
@@ -112,9 +110,13 @@ struct CarEvent @0x9b1657f34caf3ad3 {
     driverMonitorOffDEPRECATED @42;
     calibrationProgressDEPRECATED @47;
     invalidGiraffeHondaDEPRECATED @49;
+    invalidGiraffeToyotaDEPRECATED @60;
+    whitePandaUnsupportedDEPRECATED @81;
+    startupGreyPandaDEPRECATED @82;
     canErrorPersistentDEPRECATED @83;
     focusRecoverActiveDEPRECATED @86;
     neosUpdateRequiredDEPRECATED @88;
+    modelLagWarningDEPRECATED @93;
   }
 }
 
@@ -436,11 +438,14 @@ struct CarParams {
   }
 
   struct LateralINDITuning {
-    outerLoopGainBP @0 :List(Float32);
+    outerLoopGainBP @0 :List(Float32) = [0.];
     outerLoopGainV @1 :List(Float32);
-    innerLoopGain @2 :Float32;
-    timeConstant @3 :Float32;
-    actuatorEffectiveness @4 :Float32;
+    innerLoopGainBP @2 :List(Float32) = [0.];
+    innerLoopGainV @3 :List(Float32);
+    timeConstantBP @4 :List(Float32) = [0.];
+    timeConstantV @5:List(Float32);
+    actuatorEffectivenessBP @6 :List(Float32) = [0.];
+    actuatorEffectivenessV @7 :List(Float32);
   }
 
   struct LateralLQRTuning {

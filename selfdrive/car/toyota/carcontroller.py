@@ -4,7 +4,7 @@ from selfdrive.car import apply_toyota_steer_torque_limits, create_gas_command, 
 from selfdrive.car.toyota.toyotacan import create_steer_command, create_ui_command, \
                                            create_accel_command, create_acc_cancel_command, \
                                            create_fcw_command
-from selfdrive.car.toyota.values import Ecu, CAR, STATIC_MSGS, SteerLimitParams
+from selfdrive.car.toyota.values import Ecu, CAR, STATIC_MSGS, NO_STOP_TIMER_CAR, MIN_ACC_SPEED, SteerLimitParams
 from opendbc.can.packer import CANPacker
 from common.op_params import opParams
 
@@ -38,9 +38,9 @@ class CarController():
     self.alert_active = False
     self.last_standstill = False
     self.standstill_req = False
-    self.standstill_hack = opParams().get('standstill_hack')
+    self.op_params = opParams()
+    self.standstill_hack = self.op_params.get('standstill_hack')
 
-    self.last_fault_frame = -200
     self.steer_rate_limited = False
 
     self.fake_ecus = set()
@@ -60,7 +60,7 @@ class CarController():
 
     apply_gas = clip(actuators.gas, 0., 1.)
 
-    if CS.CP.enableGasInterceptor:
+    if CS.CP.enableGasInterceptor and CS.out.vEgo < MIN_ACC_SPEED:
       # send only negative accel if interceptor is detected. otherwise, send the regular value
       # +0.06 offset to reduce ABS pump usage when OP is engaged
       apply_accel = 0.06 - actuators.brake
@@ -75,13 +75,8 @@ class CarController():
     apply_steer = apply_toyota_steer_torque_limits(new_steer, self.last_steer, CS.out.steeringTorqueEps, SteerLimitParams)
     self.steer_rate_limited = new_steer != apply_steer
 
-    # only cut torque when steer state is a known fault
-    if CS.steer_state in [9, 25]:
-      self.last_fault_frame = frame
-
-    # Cut steering for 2s after fault
-    # if (CS.out.steeringAngle < 0 < CS.out.steeringRate or CS.out.steeringAngle > 0 > CS.out.steeringRate) and abs(CS.out.steeringRate) > 175:
-    if not enabled or (frame - self.last_fault_frame < 200) or abs(CS.out.steeringRate) > 100:
+    # Cut steering for duration of known fault
+    if not enabled or CS.steer_state in [9, 25] or (abs(CS.out.steeringRate) >= 100 and self.op_params.get('steer_fault_fix')):
       apply_steer = 0
       apply_steer_req = 0
     else:
@@ -92,7 +87,7 @@ class CarController():
       pcm_cancel_cmd = 1
 
     # on entering standstill, send standstill request
-    if CS.out.standstill and not self.last_standstill and not self.standstill_hack:
+    if CS.out.standstill and not self.last_standstill and CS.CP.carFingerprint not in NO_STOP_TIMER_CAR and not self.standstill_hack:
       self.standstill_req = True
     if CS.pcm_acc_status != 8:
       # pcm entered standstill or it's disabled
@@ -130,7 +125,7 @@ class CarController():
       else:
         can_sends.append(create_accel_command(self.packer, 0, pcm_cancel_cmd, False, lead))
 
-    if (frame % 2 == 0) and (CS.CP.enableGasInterceptor):
+    if frame % 2 == 0 and CS.CP.enableGasInterceptor and CS.out.vEgo < MIN_ACC_SPEED:
       # send exactly zero if apply_gas is zero. Interceptor will send the max between read value and apply_gas.
       # This prevents unexpected pedal range rescaling
       can_sends.append(create_gas_command(self.packer, apply_gas, frame//2))

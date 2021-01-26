@@ -122,7 +122,7 @@ class CarInterfaceBase():
     # Optionally allow to press gas at zero speed to resume.
     # e.g. Chrysler does not spam the resume button yet, so resuming with gas is handy. FIXME!
     if (cs_out.gasPressed and (not self.CS.out.gasPressed) and self.disengage_on_gas and cs_out.vEgo > gas_resume_speed) or \
-       (cs_out.brakePressed and (not self.CS.out.brakePressed or not cs_out.standstill)):  # still disengages on brake!
+            (cs_out.brakePressed and (not self.CS.out.brakePressed or not cs_out.standstill)):  # still disengages on brake!
       events.add(EventName.pedalPressed)
 
     # we engage when pcm is active (rising edge)

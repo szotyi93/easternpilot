@@ -212,7 +212,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
 
   # ********** events only containing alerts displayed in all states **********
 
-  'modelLongAlert': {
+'modelLongAlert': {
     ET.PERMANENT: Alert(
       "Model longitudinal ",
       "Remain alert",
@@ -308,7 +308,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
       Priority.LOWER, VisualAlert.none, AudibleAlert.none, 0., 0., 15.),
   },
 
-  EventName.startupGreyPanda: {
+  EventName.startupGreyPandaDEPRECATED: {
     ET.PERMANENT: Alert(
       "WARNING: Grey panda is deprecated",
       "Upgrade to comma two or black panda",
@@ -316,7 +316,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
       Priority.LOWER, VisualAlert.none, AudibleAlert.none, 0., 0., 15.),
   },
 
-  EventName.invalidGiraffeToyota: {
+  EventName.invalidGiraffeToyotaDEPRECATED: {
     ET.PERMANENT: Alert(
       "Unsupported Giraffe Configuration",
       "Visit comma.ai/tg",
@@ -324,7 +324,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
       Priority.LOWER, VisualAlert.none, AudibleAlert.none, 0., 0., .2),
   },
 
-  EventName.whitePandaUnsupported: {
+  EventName.whitePandaUnsupportedDEPRECATED: {
     ET.PERMANENT: Alert(
       "White Panda No Longer Supported",
       "Upgrade to comma two or black panda",
@@ -536,6 +536,10 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
     ET.PERMANENT: NormalPermanentAlert("Fan Malfunction", "Contact Support"),
   },
 
+  EventName.cameraMalfunction: {
+    ET.PERMANENT: NormalPermanentAlert("Camera Malfunction", "Contact Support"),
+  },
+
   # ********** events that affect controls state transitions **********
 
   EventName.pcmEnable: {
@@ -585,7 +589,7 @@ EVENTS: Dict[int, Dict[str, Union[Alert, Callable[[Any, messaging.SubMaster, boo
       "TAKE CONTROL",
       "Steering Temporarily Unavailable",
       AlertStatus.userPrompt, AlertSize.mid,
-      Priority.LOW, VisualAlert.steerRequired, AudibleAlert.chimeWarning1, .4, 2., 3.),
+      Priority.LOW, VisualAlert.steerRequired, AudibleAlert.chimeWarning1, .4, 2., .5),
     ET.NO_ENTRY: NoEntryAlert("Steering Temporarily Unavailable",
                               duration_hud_alert=0.),
   },
