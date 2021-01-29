@@ -7,7 +7,7 @@ df_profiles = dfProfiles()
 df_manager = dfManager(op_params)
 
 
-def enable_eastern_roads(eastern_road_flag, debug=False):
+def enable_eastern_roads(eastern_road_flag=True, debug=False):
     if eastern_road_flag:
         if debug:
             print(op_params.get('camera_offset'))
@@ -23,3 +23,7 @@ def enable_eastern_roads(eastern_road_flag, debug=False):
             pass
     else:
         pass
+
+
+if __name__ == '__main__':
+    enable_eastern_roads(True, True)
