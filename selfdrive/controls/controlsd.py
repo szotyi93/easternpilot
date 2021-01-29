@@ -26,6 +26,8 @@ from selfdrive.locationd.calibrationd import Calibration
 from selfdrive.controls.lib.dynamic_follow.df_manager import dfManager
 from common.op_params import opParams
 
+from selfdrive.controls.lib.eastern_roads import eastern_roads
+
 LDW_MIN_SPEED = 31 * CV.MPH_TO_MS
 LANE_DEPARTURE_THRESHOLD = 0.1
 STEER_ANGLE_SATURATION_TIMEOUT = 1.0 / DT_CTRL
@@ -178,6 +180,9 @@ class Controls:
     self.events.clear()
     self.events.add_from_msg(CS.events)
     self.events.add_from_msg(self.sm['dMonitoringState'].events)
+
+    # TODO Testing
+    eastern_roads.enable_eastern_roads(True)
 
     # Handle startup event
     if self.startup_event is not None:
