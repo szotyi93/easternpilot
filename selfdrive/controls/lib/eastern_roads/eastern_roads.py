@@ -9,18 +9,18 @@ df_manager = dfManager(op_params)
 
 def enable_eastern_roads(eastern_road_flag=True, debug=False):
     if eastern_road_flag:
-        if debug:
-            print(op_params.get('camera_offset'))
         if df_manager.cur_user_profile == df_profiles.traffic:
-            op_params.put('camera_offset', 0.11)
+            op_params.put('camera_offset', 0.06)
         elif df_manager.cur_user_profile == df_profiles.relaxed:
-            op_params.put('camera_offset', 0.4)
+            op_params.put('camera_offset', 0.2)
         elif df_manager.cur_user_profile == df_profiles.roadtrip:
-            op_params.put('camera_offset', 1)
+            op_params.put('camera_offset', 0.4)
         elif df_manager.cur_user_profile == df_profiles.auto:
             op_params.put('camera_offset', 1.5)
         else:
             pass
+    if debug:
+            print(op_params.get('camera_offset'))
     else:
         pass
 
