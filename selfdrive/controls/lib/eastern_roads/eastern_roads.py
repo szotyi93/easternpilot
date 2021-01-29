@@ -11,13 +11,13 @@ def enable_eastern_roads(eastern_road_flag=True, debug=False):
     df_manager = dfManager(op_params)
     if eastern_road_flag:
         if sm_smiskol['dynamicFollowButton'].status == df_profiles.traffic:
-            op_params.put('camera_offset', int(0.06))
+            op_params.put('camera_offset', 0.06)
         elif sm_smiskol['dynamicFollowButton'].status == df_profiles.relaxed:
-            op_params.put('camera_offset', int(0.2))
+            op_params.put('camera_offset', 0.2)
         elif sm_smiskol['dynamicFollowButton'].status == df_profiles.roadtrip:
-            op_params.put('camera_offset', int(0.6))
+            op_params.put('camera_offset', 0.6)
         elif sm_smiskol['dynamicFollowButton'].status == df_profiles.auto:
-            op_params.put('camera_offset', int(1.3))
+            op_params.put('camera_offset', 1.3)
         else:
             pass
     if debug:
