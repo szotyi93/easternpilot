@@ -310,14 +310,14 @@ class Controls:
     if df_out.changed:
       # TODO Testing
       # eastern_roads_old.enable_eastern_roads(True)
-      if df_out.user_profile == self.df_profiles.traffic:
-        self.op_params.put('camera_offset', 0.06)
-      elif df_out.user_profile == self.df_profiles.relaxed:
-        self.op_params.put('camera_offset', 0.2)
-      elif df_out.user_profile == self.df_profiles.roadtrip:
-        self.op_params.put('camera_offset', 0.6)
-      elif df_out.user_profile == self.df_profiles.auto:
-        self.op_params.put('camera_offset', 1.3)
+      if self.sm_smiskol['dynamicFollowButton'].status == self.df_profiles.traffic:
+        self.op_params.put('camera_offset', int(0.06))
+      elif self.sm_smiskol['dynamicFollowButton'].status == self.df_profiles.relaxed:
+        self.op_params.put('camera_offset', int(0.2))
+      elif self.sm_smiskol['dynamicFollowButton'].status == self.df_profiles.roadtrip:
+        self.op_params.put('camera_offset', int(0.6))
+      elif self.sm_smiskol['dynamicFollowButton'].status == self.df_profiles.auto:
+        self.op_params.put('camera_offset', int(1.3))
       else:
         pass
 
