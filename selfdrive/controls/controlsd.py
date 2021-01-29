@@ -181,9 +181,6 @@ class Controls:
     self.events.add_from_msg(CS.events)
     self.events.add_from_msg(self.sm['dMonitoringState'].events)
 
-    # TODO Testing
-    eastern_roads.enable_eastern_roads(True)
-
     # Handle startup event
     if self.startup_event is not None:
       self.events.add(self.startup_event)
@@ -310,6 +307,9 @@ class Controls:
 
     df_out = self.df_manager.update()
     if df_out.changed:
+      # TODO Testing
+      eastern_roads.enable_eastern_roads(True)
+
       df_alert = 'dfButtonAlert'
       if df_out.is_auto and df_out.last_is_auto:
         # only show auto alert if engaged, not hiding auto, and time since lane speed alert not showing
