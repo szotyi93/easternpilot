@@ -25,8 +25,9 @@ from selfdrive.controls.lib.planner import LON_MPC_STEP
 from selfdrive.locationd.calibrationd import Calibration
 from selfdrive.controls.lib.dynamic_follow.df_manager import dfManager
 from common.op_params import opParams
+from selfdrive.controls.lib.dynamic_follow.support import dfProfiles
 
-from selfdrive.controls.lib.eastern_roads import eastern_roads
+from selfdrive.controls.lib.eastern_roads import eastern_roads_old
 
 LDW_MIN_SPEED = 31 * CV.MPH_TO_MS
 LANE_DEPARTURE_THRESHOLD = 0.1
@@ -58,7 +59,7 @@ def log_fingerprint(candidate, timeout=15):
 class Controls:
   def __init__(self, sm=None, pm=None, can_sock=None):
     config_realtime_process(3, Priority.CTRL_HIGH)
-    self.op_params = opParams()
+    self.df_profiles = dfProfiles()
 
     # Setup sockets
     self.pm = pm
@@ -308,7 +309,17 @@ class Controls:
     df_out = self.df_manager.update()
     if df_out.changed:
       # TODO Testing
-      eastern_roads.enable_eastern_roads(True)
+      # eastern_roads_old.enable_eastern_roads(True)
+      if self.df_manager.cur_user_profile == self.df_profiles.traffic:
+        self.op_params.put('camera_offset', 0.06)
+      elif self.df_manager.cur_user_profile == self.df_profiles.relaxed:
+        self.op_params.put('camera_offset', 0.2)
+      elif self.df_manager.cur_user_profile == self.df_profiles.roadtrip:
+        self.op_params.put('camera_offset', 0.4)
+      elif self.df_manager.cur_user_profile == self.df_profiles.auto:
+        self.op_params.put('camera_offset', 1)
+      else:
+        pass
 
       df_alert = 'dfButtonAlert'
       if df_out.is_auto and df_out.last_is_auto:
